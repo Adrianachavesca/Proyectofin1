@@ -1,0 +1,59 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "Inventory product item",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "category": { "type": "string" },
+        "price": { "type": "number" },
+        "cost": { "type": "number" },
+        "stock": { "type": "number" },
+        "minStock": { "type": "number" }
+      },
+      "required": ["name", "category", "price", "stock"]
+    },
+    "Sale": {
+      "title": "Sale",
+      "description": "Record of a sale",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "productId": { "type": "string" },
+        "productName": { "type": "string" },
+        "quantity": { "type": "number" },
+        "price": { "type": "number" },
+        "total": { "type": "number" },
+        "timestamp": { "type": "string" },
+        "status": { "type": "string" },
+        "trackingNumber": { "type": "string" }
+      },
+      "required": ["productId", "quantity", "total", "timestamp"]
+    },
+    "AppConfig": {
+      "title": "AppConfig",
+      "description": "Application configuration",
+      "type": "object",
+      "properties": {
+        "excelSheetName": { "type": "string" },
+        "excelFileName": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "products": {
+      "schema": "Product",
+      "description": "Collection of inventory products"
+    },
+    "sales": {
+      "schema": "Sale",
+      "description": "Collection of sales records"
+    },
+    "config": {
+      "schema": "AppConfig",
+      "description": "Global application configuration documents (singleton expected at 'global')"
+    }
+  }
+}

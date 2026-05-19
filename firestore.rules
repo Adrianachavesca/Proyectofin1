@@ -1,0 +1,59 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Since we don't have Auth implemented in the UI yet, 
+    // we'll allow public access for now BUT with strict validation.
+    // In a production app, these should be restricted to signed-in users.
+
+    match /products/{productId} {
+      allow read: if true;
+      allow create: if isValidProduct(incoming());
+      allow update: if isValidProduct(incoming());
+      allow delete: if true; 
+    }
+
+    match /sales/{saleId} {
+      allow read: if true;
+      allow create: if isValidSale(incoming());
+      allow update: if isValidSale(incoming());
+      allow delete: if true;
+    }
+
+    match /config/{configId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    function isValidProduct(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() < 200 &&
+             data.category is string &&
+             data.price is number &&
+             data.stock is number;
+    }
+
+    function isValidSale(data) {
+      return data.productId is string &&
+             data.quantity is number &&
+             data.total is number &&
+             data.timestamp is string;
+    }
+  }
+}
