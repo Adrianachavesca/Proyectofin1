@@ -54,6 +54,8 @@ export default function App() {
   const [aiResponse, setAiResponse] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [confirmConfig, setConfirmConfig] = useState<{ message: string, onConfirm: () => void }>({ message: '', onConfirm: () => {} });
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [productForm, setProductForm] = useState({
     name: '',
@@ -94,12 +96,32 @@ export default function App() {
     }
   };
 
-  const handleDeleteProduct = async (id: string) => {
-    if (!confirm('¿Seguro que desea eliminar este producto?')) return;
-    const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
-    if (res.ok) {
-      setProducts(products.filter(p => p.id !== id));
-    }
+  const triggerDeleteProduct = (id: string) => {
+    setConfirmConfig({
+      message: '¿Está seguro de que desea eliminar permanentemente este producto? Esta acción no se puede deshacer.',
+      onConfirm: async () => {
+        const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          setProducts(products.filter(p => p.id !== id));
+        }
+        setIsConfirmModalOpen(false);
+      }
+    });
+    setIsConfirmModalOpen(true);
+  };
+
+  const triggerDeleteSale = (saleId: string) => {
+    setConfirmConfig({
+      message: '¿Desea eliminar este registro de venta de los archivos maestro?',
+      onConfirm: async () => {
+        const res = await fetch(`/api/sales/${saleId}`, { method: 'DELETE' });
+        if (res.ok) {
+          setSales(sales.filter(s => s.id !== saleId));
+        }
+        setIsConfirmModalOpen(false);
+      }
+    });
+    setIsConfirmModalOpen(true);
   };
 
   const openProductModal = (product?: Product) => {
@@ -160,14 +182,6 @@ export default function App() {
     if (res.ok) {
       const updatedSale = await res.json();
       setSales(sales.map(s => s.id === saleId ? updatedSale : s));
-    }
-  };
-
-  const handleDeleteSale = async (saleId: string) => {
-    if (!confirm('¿Seguro que desea eliminar este registro de venta?')) return;
-    const res = await fetch(`/api/sales/${saleId}`, { method: 'DELETE' });
-    if (res.ok) {
-      setSales(sales.filter(s => s.id !== saleId));
     }
   };
 
@@ -297,8 +311,8 @@ export default function App() {
               transition={{ duration: 0.2 }}
             >
               {activeTab === 'dashboard' && <DashboardView products={products} sales={sales} />}
-              {activeTab === 'inventory' && <InventoryView products={products} searchTerm={searchTerm} onEdit={openProductModal} onDelete={handleDeleteProduct} />}
-              {activeTab === 'sales' && <SalesView sales={sales} onUpdate={handleUpdateSaleStatus} onAdd={handleAddSale} products={products} />}
+              {activeTab === 'inventory' && <InventoryView products={products} searchTerm={searchTerm} onEdit={openProductModal} onDelete={triggerDeleteProduct} />}
+              {activeTab === 'sales' && <SalesView sales={sales} onUpdate={handleUpdateSaleStatus} onAdd={handleAddSale} products={products} onDelete={triggerDeleteSale} />}
               {activeTab === 'alerts' && <AlertsView products={products} />}
               {activeTab === 'assistant' && <AssistantView aiResponse={aiResponse} isLoading={isAiLoading} onAsk={askAi} />}
               {activeTab === 'settings' && <SettingsView config={config} onSave={updateConfig} />}
@@ -386,13 +400,37 @@ export default function App() {
           {editingProduct && (
             <button 
               type="button"
-              onClick={() => { handleDeleteProduct(editingProduct.id); setIsProductModalOpen(false); }}
+              onClick={() => { triggerDeleteProduct(editingProduct.id); setIsProductModalOpen(false); }}
               className="w-full py-3 border border-red-500/30 text-red-400 rounded-sm text-[11px] uppercase tracking-widest font-bold hover:bg-red-500/10 transition-colors mt-2"
             >
               Eliminar Permanentemente
             </button>
           )}
         </form>
+      </Modal>
+
+      <Modal 
+        isOpen={isConfirmModalOpen} 
+        onClose={() => setIsConfirmModalOpen(false)} 
+        title="Confirmación de Sistema"
+      >
+        <div className="space-y-6">
+          <p className="text-gray-400 text-sm italic leading-relaxed text-center">{confirmConfig.message}</p>
+          <div className="flex gap-4">
+            <button 
+              onClick={() => setIsConfirmModalOpen(false)}
+              className="flex-1 py-4 border border-white/10 text-gray-500 rounded-sm text-[10px] uppercase tracking-[0.2em] font-bold hover:bg-white/5 transition-all outline-none"
+            >
+              Cancelar
+            </button>
+            <button 
+              onClick={confirmConfig.onConfirm}
+              className="flex-1 py-4 bg-red-600 text-white rounded-sm text-[10px] uppercase tracking-[0.2em] font-bold hover:bg-red-700 transition-all shadow-xl shadow-red-600/10 outline-none"
+            >
+              Confirmar
+            </button>
+          </div>
+        </div>
       </Modal>
     </div>
   );
@@ -536,7 +574,7 @@ function InventoryView({ products, searchTerm, onEdit, onDelete }: { products: P
   );
 }
 
-function SalesView({ sales, onUpdate, onAdd, products }: { sales: Sale[], onUpdate: any, onAdd: any, products: Product[] }) {
+function SalesView({ sales, onUpdate, onAdd, products, onDelete }: { sales: Sale[], onUpdate: any, onAdd: any, products: Product[], onDelete: (id: string) => void }) {
   const [selectedProd, setSelectedProd] = useState('');
   const [qty, setQty] = useState(1);
 
@@ -630,7 +668,7 @@ function SalesView({ sales, onUpdate, onAdd, products }: { sales: Sale[], onUpda
                 <td className="px-8 py-5 font-mono text-sm text-white text-right tracking-tighter">${sale.total.toLocaleString()}</td>
                 <td className="px-8 py-5 text-right">
                   <button 
-                    onClick={() => handleDeleteSale(sale.id)}
+                    onClick={() => onDelete(sale.id)}
                     className="p-2 border border-red-500/20 hover:bg-red-500/20 text-red-500 rounded opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
