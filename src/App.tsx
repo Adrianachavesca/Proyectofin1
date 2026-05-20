@@ -561,9 +561,9 @@ function InventoryView({ products, searchTerm, onEdit, onDelete }: { products: P
                 <div className="text-[9px] text-gray-600 mt-1 uppercase font-bold tracking-widest">Base Logística: {p.minStock}</div>
               </td>
               <td className="px-8 py-5 text-right">
-                <div className="flex items-center justify-end gap-2 opacity-40 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => onEdit(p)} className="p-2 border border-white/10 hover:bg-white/10 text-white rounded transition-all"><Edit2 className="w-3.5 h-3.5" /></button>
-                  <button onClick={() => onDelete(p.id)} className="p-2 border border-red-500/20 hover:bg-red-500/20 text-red-400 rounded transition-all"><Trash2 className="w-3.5 h-3.5" /></button>
+                <div className="flex items-center justify-end gap-2">
+                  <button onClick={() => onEdit(p)} className="p-2 border border-white/10 hover:bg-white/10 text-white rounded transition-all" title="Editar Producto"><Edit2 className="w-3.5 h-3.5" /></button>
+                  <button onClick={() => onDelete(p.id)} className="p-2 border border-red-500/20 hover:bg-red-500/20 text-red-400 rounded transition-all" title="Eliminar Producto"><Trash2 className="w-3.5 h-3.5" /></button>
                 </div>
               </td>
             </tr>
@@ -669,7 +669,8 @@ function SalesView({ sales, onUpdate, onAdd, products, onDelete }: { sales: Sale
                 <td className="px-8 py-5 text-right">
                   <button 
                     onClick={() => onDelete(sale.id)}
-                    className="p-2 border border-red-500/20 hover:bg-red-500/20 text-red-500 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="p-2 border border-red-500/20 hover:bg-red-500/20 text-red-500 rounded transition-all"
+                    title="Eliminar Registro"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
